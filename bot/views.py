@@ -18,11 +18,13 @@ bot = init_bot()
 class WebHook(View):
     def post(self, request):
         data = request.body
-        sig = request.headers.get("X-Viber-Content-Signature")
+        sig_header = request.headers.get("X-Viber-Content-Signature", None)
+        sig_query = request.GET.get("sig", None)
+        sig = sig_header or sig_query or ""
 
         if not verify_sig(bot, data, sig):
             return HttpResponse(status=FORBIDDEN)
-        
+
         bot_request = get_request(bot, data)
         request_type = get_request_type(bot_request)
 
@@ -30,3 +32,5 @@ class WebHook(View):
             user = bot_request.get_user
             uid = user.id
             send_text(bot, uid, "Thank you for subscribing!")
+
+        return HttpResponse(status=200)
