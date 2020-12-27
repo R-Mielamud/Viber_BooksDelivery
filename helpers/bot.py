@@ -1,6 +1,6 @@
 from viberbot import Api
 from viberbot.api.bot_configuration import BotConfiguration
-from viberbot.api.viber_requests import ViberMessageRequest, ViberSubscribedReq>
+from viberbot.api.viber_requests import ViberMessageRequest, ViberSubscribedRequest
 from viberbot.api.messages.text_message import TextMessage
 from BooksDelivery import settings
 
