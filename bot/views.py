@@ -32,5 +32,9 @@ class WebHook(View):
             user = bot_request.get_user
             uid = user.id
             send_text(bot, uid, "Thank you for subscribing!")
+        elif request_type == REQ_MESSAGE:
+            user = bot_request.sender
+            uid = user.id
+            send_text(bot, uid, "Hello!")
 
         return HttpResponse(status=200)
