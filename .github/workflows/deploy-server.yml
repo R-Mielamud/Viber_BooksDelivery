@@ -1,0 +1,19 @@
+name: Deploy Server
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - '.github/**/*.*'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.AWS_SERVER_SSH_HOST }}
+          port: ${{ secrets.AWS_SERVER_SSH_PORT }}
+          key: ${{ secrets.AWS_SERVER_SSH_PRIV_KEY }}
+          username: ${{ secrets.AWS_SERVER_SSH_USER }}
+          script: 'source /home/ubuntu/site/deployment/deploy.bash'
