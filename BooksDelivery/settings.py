@@ -29,7 +29,7 @@ SECRET_KEY = 'n0lduixnm7cr7s&%1g#w%oibcu7=@@p!(wuai+s2n7sw02k0@#'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True if os.environ.get("DJ_DEBUG", "1") == "1" else False
 
-ALLOWED_HOSTS = ["3.8.116.227"]
+ALLOWED_HOSTS = ["3.8.116.227", "viberbksdlv.tk"]
 
 
 # Application definition
