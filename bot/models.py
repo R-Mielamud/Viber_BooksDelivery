@@ -11,6 +11,7 @@ class Requisites(Dated):
     delivery_name = CharField(max_length=100, default="")
     post_service = CharField(max_length=300, default="")
     delivery_address = CharField(max_length=300, default="")
+    user = OneToOneField(ViberUser, on_delete=CASCADE, to_field="requisites", blank=True, null=True)
 
 class Bill(Dated):
     amount = CharField(max_length=100, default="")
@@ -19,6 +20,6 @@ class Bill(Dated):
 class ViberUser(Model):
     phone = CharField(max_length=20, default="+000000000000")
     orders = ForeignKey(Order, on_delete=CASCADE, related_name="user", default=[])
-    requisites = OneToOneField(Requisites, on_delete=CASCADE, to_field="user", blank=True, null=True)
+    requisites = OneToOneField(Requisites, on_delete=SET_NULL, to_field="user", blank=True, null=True)
     bills = ForeignKey(Bill, on_delete=CASCADE, related_name="user", default=[])
     convers_answers_data = JSONField(blank=True, null=True)
