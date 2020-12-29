@@ -11,7 +11,6 @@ from helpers.bot import (
     get_request_type,
     send_text,
     REQ_CHAT,
-    REQ_UNSUBSCRIBTION,
     REQ_MESSAGE,
     REQ_UNKNOWN
 )
@@ -71,6 +70,9 @@ manifest = {
 conversations = {}
 
 class WebHook(View):
+    def success(self):
+        return HttpResponse(status=200)
+
     def post(self, request):
         data = request.body
         sig_header = request.headers.get("X-Viber-Content-Signature", None)
@@ -84,63 +86,52 @@ class WebHook(View):
         request_type = get_request_type(bot_request)
 
         if request_type == REQ_CHAT:
-            user = bot_request.get_user
-            print(user.__dict__)
+            user = bot_request.user
             uid = user.id
-            phone = user.phone_number
-            ViberUser.objects.create(phone=phone)
-
-            conversations[uid] = Conversation(manifest)
-            question = conversations[uid].get_next_question()
-
-            while question:
-                send_text(bot, uid, question["text"])
-
-                if question[ACTION] != ACTION_TEXT:
-                    break
-
-                question = conversations[uid].get_next_question()
-        elif request_type == REQ_UNSUBSCRIBTION:
-            user = bot_request.get_user
-            phone = user.phone_number
-            ViberUser.objects.delete(phone=phone)
+            ViberUser.objects.get_or_create(viber_id=uid)
+            send_text(bot, uid, "Welcome to fruit bot! Enter your phone number:")
         elif request_type == REQ_MESSAGE:
             message = bot_request.message
 
-            if isinstance(message, TextMessage):
-                text = message.text
-                user = bot_request.sender
-                uid = user.id
-                phone = user.phone_number
-                user = ViberUser.objects.filter(phone=phone).first()
+            if not isinstance(message, TextMessage):
+                return success()
 
-                if not conversations.get(uid):
-                    if user:
-                        if user.convers_answers_data:
-                            answers = user.convers_answers_data
+            text = message.text
+            user = bot_request.sender
+            uid = user.id
+            user = ViberUser.objects.filter(viber_id=uid).first()
 
-                            conversations[uid] = Conversation(
-                                manifest,
-                                start_from_id=list(answers.keys())[-1],
-                                default_answers_data=answers
-                            )
+            if not user.phone:
+                user.phone = text
+                user.save()
+                return success()
+
+            if not conversations.get(uid) and user and user.convers_answers_data:
+                answers = user.convers_answers_data
+                keys = list(answers.keys())
+
+                conversations[uid] = Conversation(
+                    manifest,
+                    start_from_id=keys[-1] if len(keys) > 0 else None,
+                    default_answers_data=answers
+                )
+
+            question = conversations[uid].get_next_question(text)
+
+            while question:
+                send_text(question)
+
+                if question[ACTION] != ACTION_TEXT:
+                    user.convers_answers_data = conversations[uid].answers
+                    user.save()
+                    break
 
                 question = conversations[uid].get_next_question(text)
 
-                while question:
-                    send_text(question)
+            if not question:
+                # TODO: save answers data
+                user.convers_answers_data = {}
+                user.save()
+                conversations[uid] = Conversation(manifest)
 
-                    if question[ACTION] != ACTION_TEXT:
-                        user.convers_answers_data = conversations[uid].answers
-                        user.save()
-                        break
-
-                    question = conversations[uid].get_next_question(text)
-
-                if not question:
-                    # TODO: save answers data
-                    user.convers_answers_data = {}
-                    user.save()
-                    conversations[uid] = Conversation(manifest)
-
-        return HttpResponse(status=200)
+        return success()

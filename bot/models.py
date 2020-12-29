@@ -17,8 +17,9 @@ class Bill(Dated):
     comment = TextField(max_length=500, default="")
 
 class ViberUser(Model):
-    phone = CharField(max_length=20, default="+000000000000")
+    viber_id = CharField(max_length=50, default="1234567890A==")
+    phone = CharField(max_length=20, blank=True, null=True)
     orders = ForeignKey(Order, on_delete=CASCADE, related_name="user", default=[])
     requisites = OneToOneField(Requisites, on_delete=CASCADE, blank=True, null=True)
     bills = ForeignKey(Bill, on_delete=CASCADE, related_name="user", default=[])
-    convers_answers_data = JSONField(blank=True, null=True)
+    convers_answers_data = JSONField(default=dict)
