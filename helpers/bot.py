@@ -1,10 +1,11 @@
 from viberbot import Api
 from viberbot.api.bot_configuration import BotConfiguration
-from viberbot.api.viber_requests import ViberMessageRequest, ViberSubscribedRequest
+from viberbot.api.viber_requests import ViberMessageRequest, ViberSubscribedRequest, ViberUnsubscribedRequest
 from viberbot.api.messages.text_message import TextMessage
 from BooksDelivery import settings
 
 REQ_SUBSCRIBTION = "subscribtion"
+REQ_UNSUBSCRIBTION = "unsubscribtion"
 REQ_MESSAGE = "message"
 REQ_UNKNOWN = "unknown"
 
@@ -29,6 +30,8 @@ def get_request_type(request):
         return REQ_SUBSCRIBTION
     elif isinstance(request, ViberMessageRequest):
         return REQ_MESSAGE
+    elif isinstance(request, ViberUnsubscribedRequest):
+        return REQ_UNSUBSCRIBTION
 
     return REQ_UNKNOWN
 
