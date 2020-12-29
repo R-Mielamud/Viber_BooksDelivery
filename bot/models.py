@@ -1,11 +1,10 @@
 from django.db.models import *
-from django.contrib.postgres.fields import JSONField
 
 class Dated(Model):
     created_at = DateField(auto_now=True)
 
 class Order(Dated):
-    books = JSONField(default=[])
+    books = JSONField(default=list)
 
 class Requisites(Dated):
     delivery_phone = CharField(max_length=20, default="+000000000000")
