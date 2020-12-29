@@ -10,7 +10,7 @@ from helpers.bot import (
     get_request,
     get_request_type,
     send_text,
-    REQ_SUBSCRIBTION,
+    REQ_CHAT,
     REQ_UNSUBSCRIBTION,
     REQ_MESSAGE,
     REQ_UNKNOWN
@@ -83,7 +83,7 @@ class WebHook(View):
         bot_request = get_request(bot, data)
         request_type = get_request_type(bot_request)
 
-        if request_type == REQ_SUBSCRIBTION:
+        if request_type == REQ_CHAT:
             user = bot_request.get_user
             print(user.__dict__)
             uid = user.id
