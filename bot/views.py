@@ -115,7 +115,7 @@ class WebHook(View):
 
                 print(conversations.get(uid), user.convers_answers_data)
 
-                if not conversations.get(uid) and user.convers_answers_data:
+                if not conversations.get(uid) and user.convers_answers_data is not None:
                     answers = user.convers_answers_data
                     keys = list(answers.keys())
                     print(answers, keys)
