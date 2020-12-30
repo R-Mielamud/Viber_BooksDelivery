@@ -124,7 +124,7 @@ class WebHook(View):
                 send_text(question)
 
                 if question[ACTION] != ACTION_TEXT:
-                    user.convers_answers_data = conversations[uid].answers
+                    user.convers_answers_data = conversations[uid].answers["data"]
                     user.save()
                     break
 
