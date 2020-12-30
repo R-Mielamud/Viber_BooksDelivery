@@ -85,7 +85,6 @@ class WebHook(View):
 
             bot_request = get_request(bot, data)
             request_type = get_request_type(bot_request)
-            print(request_type)
 
             if request_type == REQ_CHAT:
                 user = bot_request.user
@@ -110,15 +109,11 @@ class WebHook(View):
                 elif not user.phone:
                     user.phone = text
                     user.save()
-                    print("Phone set")
                     prev_answer = None
-
-                print(conversations.get(uid), user.convers_answers_data)
 
                 if not conversations.get(uid) and user.convers_answers_data is not None:
                     answers = user.convers_answers_data
                     keys = list(answers.keys())
-                    print(answers, keys)
 
                     conversations[uid] = Conversation(
                         manifest,
@@ -127,7 +122,6 @@ class WebHook(View):
                     )
 
                 question = conversations[uid].get_next_question(prev_answer)
-                print(question)
 
                 while question:
                     send_text(bot, uid, question["text"])
@@ -137,11 +131,10 @@ class WebHook(View):
                             user.convers_answers_data = {}
                             user.save()
                             conversations[uid] = Conversation(manifest)
+                            break
                         else:
                             user.convers_answers_data = conversations[uid].answers["data"]
                             user.save()
-
-                        break
 
                     question = conversations[uid].get_next_question(prev_answer)
 
