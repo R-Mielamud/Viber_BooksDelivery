@@ -32,7 +32,7 @@ manifest = {
         },
         {
             "id": "fruit",
-            "action": "choice_question",
+            "action": "choices_question",
             "text": "What do you like?\nIf apples, enter 1;\nIf lemons, enter 2\niIf carrots, enter 3",
             "choices": {
                 "1": "apple",
