@@ -97,16 +97,18 @@ class WebHook(View):
                 return self.success()
 
             text = message.text
+            prev_answer = text
             user = bot_request.sender
             uid = user.id
             user = ViberUser.objects.filter(viber_id=uid).first()
 
             if not user:
                 user = ViberUser.objects.create(viber_id=uid, phone=text)
+                prev_answer = None
             elif not user.phone:
                 user.phone = text
                 user.save()
-                return self.success()
+                prev_answer = None
 
             if not conversations.get(uid) and user.convers_answers_data:
                 answers = user.convers_answers_data
@@ -118,7 +120,7 @@ class WebHook(View):
                     default_answers_data=answers
                 )
 
-            question = conversations[uid].get_next_question(text)
+            question = conversations[uid].get_next_question(prev_answer)
 
             while question:
                 send_text(question)
@@ -134,7 +136,7 @@ class WebHook(View):
 
                     break
 
-                question = conversations[uid].get_next_question(text)
+                question = conversations[uid].get_next_question(prev_answer)
 
             if not question:
                 # TODO: save answers data
