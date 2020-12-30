@@ -73,6 +73,29 @@ class WebHook(View):
     def success(self):
         return HttpResponse(status=200)
 
+    def send_until_question(self, bot, uid, user, prev_answer):
+        question = conversations[uid].get_next_question(prev_answer)
+
+        while question:
+            send_text(bot, uid, question["text"])
+
+            if not question["skip"]:
+                if conversations[uid].answers["stopped"]:
+                    user.convers_answers_data = {}
+                    user.save()
+                    conversations[uid] = Conversation(manifest)
+
+                    return send_until_question(bot, uid, user, prev_answer)
+                else:
+                    user.convers_answers_data = conversations[uid].answers["data"]
+                    user.save()
+                    break
+
+            question = conversations[uid].get_next_question(prev_answer)
+
+        if not question:
+            return True
+
     def post(self, request):
         try:
             data = request.body
@@ -121,29 +144,16 @@ class WebHook(View):
                         default_answers_data=answers
                     )
 
-                question = conversations[uid].get_next_question(prev_answer)
+                finished_convers = self.send_until_question(bot, uid, user, prev_answer)
 
-                while question:
-                    send_text(bot, uid, question["text"])
-
-                    if not question["skip"]:
-                        if conversations[uid].answers["stopped"]:
-                            user.convers_answers_data = {}
-                            user.save()
-                            conversations[uid] = Conversation(manifest)
-                            break
-                        else:
-                            user.convers_answers_data = conversations[uid].answers["data"]
-                            user.save()
-
-                    question = conversations[uid].get_next_question(prev_answer)
-
-                if not question:
+                if not finished_convers:
                     # TODO: save answers data
 
                     user.convers_answers_data = {}
                     user.save()
                     conversations[uid] = Conversation(manifest)
+                    self.send_until_question(bot, uid, user, None)
+                    
         except Exception as e:
             print(e)
         finally:
