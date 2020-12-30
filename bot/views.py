@@ -101,12 +101,14 @@ class WebHook(View):
             uid = user.id
             user = ViberUser.objects.filter(viber_id=uid).first()
 
-            if not user.phone:
+            if not user:
+                user = ViberUser.objects.create(viber_id=uid, phone=text)
+            elif not user.phone:
                 user.phone = text
                 user.save()
                 return success()
 
-            if not conversations.get(uid) and user and user.convers_answers_data:
+            if not conversations.get(uid) and user.convers_answers_data:
                 answers = user.convers_answers_data
                 keys = list(answers.keys())
 
@@ -130,6 +132,7 @@ class WebHook(View):
 
             if not question:
                 # TODO: save answers data
+
                 user.convers_answers_data = {}
                 user.save()
                 conversations[uid] = Conversation(manifest)
