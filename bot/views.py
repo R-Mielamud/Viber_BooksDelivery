@@ -74,75 +74,84 @@ class WebHook(View):
         return HttpResponse(status=200)
 
     def post(self, request):
-        data = request.body
-        sig_header = request.headers.get("X-Viber-Content-Signature", None)
-        sig_query = request.GET.get("sig", None)
-        sig = sig_header or sig_query or ""
+        try:
+            data = request.body
+            sig_header = request.headers.get("X-Viber-Content-Signature", None)
+            sig_query = request.GET.get("sig", None)
+            sig = sig_header or sig_query or ""
 
-        if not verify_sig(bot, data, sig):
-            return HttpResponse(status=FORBIDDEN)
+            if not verify_sig(bot, data, sig):
+                return HttpResponse(status=FORBIDDEN)
 
-        bot_request = get_request(bot, data)
-        request_type = get_request_type(bot_request)
+            bot_request = get_request(bot, data)
+            request_type = get_request_type(bot_request)
+            print(request_type)
 
-        if request_type == REQ_CHAT:
-            user = bot_request.user
-            uid = user.id
-            ViberUser.objects.get_or_create(viber_id=uid)
-            send_text(bot, uid, "Welcome to fruit bot! Enter your phone number:")
-        elif request_type == REQ_MESSAGE:
-            message = bot_request.message
+            if request_type == REQ_CHAT:
+                user = bot_request.user
+                uid = user.id
+                ViberUser.objects.get_or_create(viber_id=uid)
+                send_text(bot, uid, "Welcome to fruit bot! Enter your phone number:")
+            elif request_type == REQ_MESSAGE:
+                message = bot_request.message
 
-            if not isinstance(message, TextMessage):
-                return self.success()
+                if not isinstance(message, TextMessage):
+                    return self.success()
 
-            text = message.text
-            prev_answer = text
-            user = bot_request.sender
-            uid = user.id
-            user = ViberUser.objects.filter(viber_id=uid).first()
+                text = message.text
+                prev_answer = text
+                user = bot_request.sender
+                uid = user.id
+                user = ViberUser.objects.filter(viber_id=uid).first()
 
-            if not user:
-                user = ViberUser.objects.create(viber_id=uid, phone=text)
-                prev_answer = None
-            elif not user.phone:
-                user.phone = text
-                user.save()
-                prev_answer = None
+                if not user:
+                    user = ViberUser.objects.create(viber_id=uid, phone=text)
+                    prev_answer = None
+                elif not user.phone:
+                    user.phone = text
+                    user.save()
+                    print("Phone set")
+                    prev_answer = None
 
-            if not conversations.get(uid) and user.convers_answers_data:
-                answers = user.convers_answers_data
-                keys = list(answers.keys())
+                print(conversations.get(uid), user.convers_answers_data)
 
-                conversations[uid] = Conversation(
-                    manifest,
-                    start_from_id=keys[-1] if len(keys) > 0 else None,
-                    default_answers_data=answers
-                )
+                if not conversations.get(uid) and user.convers_answers_data:
+                    answers = user.convers_answers_data
+                    keys = list(answers.keys())
+                    print(answers, keys)
 
-            question = conversations[uid].get_next_question(prev_answer)
-
-            while question:
-                send_text(question)
-
-                if question[ACTION] != ACTION_TEXT:
-                    if conversations[uid].answers["stopped"]:
-                        user.convers_answers_data = {}
-                        user.save()
-                        conversations[uid] = Conversation(manifest)
-                    else:
-                        user.convers_answers_data = conversations[uid].answers["data"]
-                        user.save()
-
-                    break
+                    conversations[uid] = Conversation(
+                        manifest,
+                        start_from_id=keys[-1] if len(keys) > 0 else None,
+                        default_answers_data=answers
+                    )
 
                 question = conversations[uid].get_next_question(prev_answer)
+                print(question)
 
-            if not question:
-                # TODO: save answers data
+                while question:
+                    send_text(question)
 
-                user.convers_answers_data = {}
-                user.save()
-                conversations[uid] = Conversation(manifest)
+                    if question[ACTION] != ACTION_TEXT:
+                        if conversations[uid].answers["stopped"]:
+                            user.convers_answers_data = {}
+                            user.save()
+                            conversations[uid] = Conversation(manifest)
+                        else:
+                            user.convers_answers_data = conversations[uid].answers["data"]
+                            user.save()
 
-        return self.success()
+                        break
+
+                    question = conversations[uid].get_next_question(prev_answer)
+
+                if not question:
+                    # TODO: save answers data
+
+                    user.convers_answers_data = {}
+                    user.save()
+                    conversations[uid] = Conversation(manifest)
+        except Exception as e:
+            print(e)
+        finally:
+            return self.success()
