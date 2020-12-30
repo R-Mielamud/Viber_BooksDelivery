@@ -124,8 +124,14 @@ class WebHook(View):
                 send_text(question)
 
                 if question[ACTION] != ACTION_TEXT:
-                    user.convers_answers_data = conversations[uid].answers["data"]
-                    user.save()
+                    if conversations[uid].answers["stopped"]:
+                        user.convers_answers_data = {}
+                        user.save()
+                        conversations[uid] = Conversation(manifest)
+                    else:
+                        user.convers_answers_data = conversations[uid].answers["data"]
+                        user.save()
+
                     break
 
                 question = conversations[uid].get_next_question(text)
