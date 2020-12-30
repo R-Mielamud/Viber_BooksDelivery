@@ -94,7 +94,7 @@ class WebHook(View):
             message = bot_request.message
 
             if not isinstance(message, TextMessage):
-                return success()
+                return self.success()
 
             text = message.text
             user = bot_request.sender
@@ -106,7 +106,7 @@ class WebHook(View):
             elif not user.phone:
                 user.phone = text
                 user.save()
-                return success()
+                return self.success()
 
             if not conversations.get(uid) and user.convers_answers_data:
                 answers = user.convers_answers_data
@@ -143,4 +143,4 @@ class WebHook(View):
                 user.save()
                 conversations[uid] = Conversation(manifest)
 
-        return success()
+        return self.success()
