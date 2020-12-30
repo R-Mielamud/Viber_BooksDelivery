@@ -108,7 +108,7 @@ class Conversation:
     def get_next_question(self, prev_answer=None):
         prev_question = self._current_question
 
-        if self._stop_command and estr(prev_answer, self._stop_command):
+        if prev_answer and self._stop_command and estr(prev_answer, self._stop_command):
             self._answers["stopped"] = True
             return None
 
@@ -171,51 +171,3 @@ class Conversation:
         self._question_levels[last_level_index]["index"] = question_index + 1
 
         return {"text": result, "id": question[ID], "skip": question[ACTION] == ACTION_TEXT}
-
-# man = {
-#     "conversation": [
-#         {
-#             "id": "t1",
-#             "action": "text",
-#             "text": "Hello!"
-#         },
-#         {
-#             "id": "c1",
-#             "action": "choices_question",
-#             "text": "Choose: A or C",
-#             "choices": {
-#                 "A": "a",
-#                 "C": "c"
-#             },
-#             "on_choices": {
-#                 "a": [
-#                     {
-#                         "id": "try_to_find_this",
-#                         "action": "text",
-#                         "text": "You found me!"
-#                     },
-#                     {
-#                         "id": "text2",
-#                         "action": "text",
-#                         "text": "Bye!"
-#                     }
-#                 ],
-#                 "c": []
-#             },
-#             "on_invalid_choice": "Enter again:"
-#         }
-#     ]
-# }
-
-# convers = Conversation(man, "try_to_find_this")
-
-# q = convers.get_next_question()
-# prev_answer = None
-
-# while q:
-#     print(q["text"])
-
-#     if not q["skip"]:
-#         prev_answer = input("Answer:")
-
-#     q = convers.get_next_question(prev_answer)
