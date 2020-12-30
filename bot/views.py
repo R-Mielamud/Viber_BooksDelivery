@@ -130,9 +130,9 @@ class WebHook(View):
                 print(question)
 
                 while question:
-                    send_text(question)
+                    send_text(bot, uid, question["text"])
 
-                    if question[ACTION] != ACTION_TEXT:
+                    if not question["skip"]:
                         if conversations[uid].answers["stopped"]:
                             user.convers_answers_data = {}
                             user.save()
