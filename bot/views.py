@@ -84,7 +84,7 @@ class WebHook(View):
                     user.convers_answers_data = {}
                     user.save()
                     conversations[uid] = Conversation(manifest)
-                    return send_until_question(bot, uid, user, prev_answer)
+                    return send_until_question(bot, uid, user, None)
                 else:
                     user.convers_answers_data = conversations[uid].answers["data"]
                     user.save()
@@ -143,12 +143,14 @@ class WebHook(View):
                 )
 
             finished_convers = self.send_until_question(bot, uid, user, prev_answer)
+            print(finished_convers)
 
             if finished_convers:
                 # TODO: save answers data
-
+                print("Finished")
                 user.convers_answers_data = {}
                 user.save()
+                print(user)
                 conversations[uid] = Conversation(manifest)
                 self.send_until_question(bot, uid, user, None)
 
