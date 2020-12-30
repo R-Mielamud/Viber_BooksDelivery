@@ -152,4 +152,4 @@ class WebHook(View):
                 conversations[uid] = Conversation(manifest)
                 self.send_until_question(bot, uid, user, None)
 
-            return self.success()
+        return self.success()
