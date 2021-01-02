@@ -39,15 +39,20 @@ class Conversation:
             ]
         else:
             path = self._get_question_path_by_id(self._manifest, start_from_id)
-
-            self._current_question_index = path["index"]
-            self._current_question = path["item"]
             self._question_levels = path["levels"]
 
-            values = list(default_answers_data.values())
+            last_level_index = len(path["levels"]) - 1
+            question_level = path["levels"][last_level_index]
+            reset_result = self._reset_levels(question_level, last_level_index, path["index"], index_minus=True)
 
-            if len(values) > 0:
-                self.get_next_question(values[len(values) - 1])
+            if reset_result:
+                if not reset_result["end"]:
+                    last_level_index = reset_result["index"]
+                    question_level = reset_result["level"]
+                    self._current_question = question_level[self._current_question_index]
+            else:
+                self._current_question_index = path["index"] + 1
+                self._current_question = question_level[self._current_question_index]
 
     @property
     def answers(self):
@@ -88,8 +93,10 @@ class Conversation:
 
         return None
 
-    def _reset_levels(self, curr_level, level_index, question_index):
-        if len(curr_level) == question_index:
+    def _reset_levels(self, curr_level, level_index, question_index, index_minus=False):
+        diff = 1 if index_minus else 0
+
+        if len(curr_level) == question_index - diff:
             if level_index == 0:
                 return {"end": True}
 
@@ -98,8 +105,8 @@ class Conversation:
             new_level = new_level_info["level"]
             self._current_question_index = new_level_info["index"]
 
-            if self._current_question_index == len(new_level):
-                return self._reset_levels(new_level, level_index - 1, self._current_question_index)
+            if len(new_level) == self._current_question_index - 1:
+                return self._reset_levels(new_level, level_index - 1, self._current_question_index, index_minus=index_minus)
             else:
                 return {"end": False, "level": new_level, "index": level_index - 1}
 
