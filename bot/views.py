@@ -31,6 +31,18 @@ manifest = {
             "text": "How can I help you?"
         },
         {
+            "id": "vegetables_text",
+            "action": "text",
+            "text": "What vegetables do you like?"
+        },
+        {
+            "id": "vegetables",
+            "action": "list_question",
+            "text": "Vegetable ",
+            "start_number": 1,
+            "stop_command": "000"
+        },
+        {
             "id": "fruit",
             "action": "choices_question",
             "text": "What do you like?\nIf apples, enter 1;\nIf lemons, enter 2\niIf carrots, enter 3",
