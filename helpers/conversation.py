@@ -45,7 +45,7 @@ class Conversation:
             self._question_levels = path["levels"]
 
             values = list(default_answers_data.values())
-            count = len(values) > 0
+            count = len(values)
             last = values[count - 1] if count > 0 else None
 
             if last and type(last) != list:
