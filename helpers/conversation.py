@@ -142,10 +142,12 @@ class Conversation:
                         self._answers["data"][prev_question[ID]] = False
                         self._change_level(prev_question[ON_NO])
             elif prev_question[ACTION] == ACTION_LIST_QUESTION:
-                if not estr(prev_question[STOP_COMMAND], prev_answer):
-                    self._answers["data"][prev_question[ID]].append(prev_answer)
-                    answers_count = len(self._answers["data"][prev_question[ID]])
+                if not estr(prev_question[STOP_COMMAND], prev_answer) and not self._answers["data"][prev_question[ID]]["stopped"]:
+                    self._answers["data"][prev_question[ID]]["data"].append(prev_answer)
+                    answers_count = len(self._answers["data"][prev_question[ID]]["data"])
                     return self._format_result("{}{}".format(prev_question[TEXT], prev_question[START_NUMBER] + answers_count))
+                else:
+                    self._answers["data"][prev_question[ID]]["stopped"] = True
             elif prev_question[ACTION] == ACTION_TEXT:
                 self._answers["data"][prev_question[ID]] = True
 
@@ -170,7 +172,7 @@ class Conversation:
         if question[ACTION] != ACTION_LIST_QUESTION:
             result = question[TEXT]
         else:
-            self._answers["data"][question[ID]] = []
+            self._answers["data"][question[ID]] = {"data": [], "stopped": False}
             result = "{}{}".format(question[TEXT], question[START_NUMBER])
 
         self._current_question = question
