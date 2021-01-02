@@ -110,7 +110,12 @@ class WebHook(View):
         if request_type == REQ_CHAT:
             request_user = bot_request.user
             uid = request_user.id
-            ViberUser.objects.get_or_create(viber_id=uid)
+            user, created = ViberUser.objects.get_or_create(viber_id=uid)
+
+            if not created:
+                user.phone = None
+                user.save()
+
             send_text(bot, uid, "Welcome to fruit bot! Enter your phone number:")
         elif request_type == REQ_MESSAGE:
             message = bot_request.message
@@ -147,11 +152,11 @@ class WebHook(View):
 
             if finished_convers:
                 # TODO: save answers data
-                print("Finished")
+
                 user.convers_answers_data = {}
                 user.save()
-                print(user.convers_answers_data)
                 conversations[uid] = Conversation(manifest)
                 self.send_until_question(bot, uid, user, None)
+
 
         return self.success()

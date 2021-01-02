@@ -44,6 +44,13 @@ class Conversation:
             self._current_question = path["item"]
             self._question_levels = path["levels"]
 
+            values = default_answers_data.values()
+            count = len(values) > 0
+            last = values[count - 1] if count > 0 else None
+
+            if last and type(last) != list:
+                self.get_next_question(last)
+
     @property
     def answers(self):
         return self._answers
@@ -141,6 +148,8 @@ class Conversation:
                     self._answers["data"][prev_question[ID]].append(prev_answer)
                     answers_count = len(self._answers["data"][prev_question[ID]])
                     return self._format_result("{}{}".format(prev_question[TEXT], prev_question[START_NUMBER] + answers_count))
+            elif prev_question[ACTION] == ACTION_TEXT:
+                self._answers["data"][prev_question[ID]] = True
 
         last_level_index = len(self._question_levels) - 1
         question_level = self._question_levels[last_level_index]["level"]
