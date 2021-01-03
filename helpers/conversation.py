@@ -1,4 +1,12 @@
-from helpers.language import estr
+# from helpers.language import estr
+def estr(str1, str2):
+    if not (type(str1) == str and type(str2) == str):
+        return False
+
+    str1 = str1.strip().lower()
+    str2 = str2.strip().lower()
+
+    return str1 == str2
 
 ACTION_TEXT = "text"
 ACTION_TEXT_QUESTION = "text_question"
@@ -17,173 +25,181 @@ CHOICES = "choices"
 ON_CHOICES = "on_choices"
 STOP_COMMAND = "stop_command"
 START_NUMBER = "start_number"
+CONVERSATION = "conversation"
 ON_INVALID_CHOICE = "on_invalid_choice"
 
+class Result:
+    def __init__(self, text, skip=False):
+        self.text = text
+        self.skip = skip
+
+class StoppableDict:
+    def __init__(self, data={}, stopped=False):
+        self.data = data
+        self.stopped = stopped
+
+    def get(self, key):
+        return self.data.get(key)
+
+    def set(self, key, value):
+        self.data[key] = value
+
+    def toggle_stop(self, value=None):
+        if value is None:
+            value = not self.stopped
+
+        self.stopped = value
+
+class Level:
+    def __init__(self, questions, index=-1):
+        self.questions = questions
+        self.index = index
+
+    def incr(self):
+        self.index += 1
+
+    def should_reset(self):
+        return len(self.questions) == self.index + 1
+
+    def get_next_question(self):
+        self.incr()
+
+        if len(self.questions) > self.index:
+            return self.questions[self.index]
+
+class Levels:
+    def __init__(self, initial=[]):
+        self.levels = initial
+    
+    @property
+    def level(self):
+        last_index = len(self.levels) - 1
+        return self.levels[last_index]
+
+    def reset_last(self):
+        if len(self.levels) > 1:
+            return self.levels.pop()
+
+    def change_level(self, level):
+        self.levels.append(level)
+
+    def get_next_question(self):
+        question = self.level.get_next_question()
+
+        if question is not None:
+            return question
+
+        if self.reset_last() is None:
+            return None
+
+        return self.get_next_question()
+
 class Conversation:
-    def __init__(self, manifest, start_from_id=None, default_answers_data={}):
-        self._manifest = manifest.get("conversation")
-        self._stop_command = manifest.get("stop_command")
+    def __init__(self, manifest, default_answers={}):
+        self._manifest = manifest[CONVERSATION]
+        self._stop_command = manifest[STOP_COMMAND]
+        self._answers = StoppableDict(default_answers)
+        keys = list(default_answers.keys())
 
-        if (not self._manifest or type(self._manifest) != list
-            or (self._stop_command is not None and type(self._stop_command) != str)):
-            raise TypeError("Invalid manifest type. Must be {'conversation': list[, 'stop_command': string]}.")
-
-        self._answers = {"data": default_answers_data, "stopped": False}
-
-        if not start_from_id:
-            self._current_question_index = 0
+        if len(keys) == 0:
             self._current_question = None
-
-            self._question_levels = [
-                {"level": self._manifest, "index": 0}
-            ]
+            self._levels = Levels([Level(self._manifest)])
         else:
-            path = self._get_question_path_by_id(self._manifest, start_from_id)
-            self._question_levels = path["levels"]
-
-            last_level_index = len(path["levels"]) - 1
-            question_level = path["levels"][last_level_index]
-            reset_result = self._reset_levels(question_level, last_level_index, path["index"], index_minus=True)
-
-            if reset_result:
-                if not reset_result["end"]:
-                    last_level_index = reset_result["index"]
-                    question_level = reset_result["level"]
-                    self._current_question = question_level[self._current_question_index]
-            else:
-                self._current_question_index = path["index"] + 1
-                self._current_question = question_level[self._current_question_index]
-
+            qid = keys[len(keys) - 1]
+            result = self._get_question_by_id(self._manifest, qid)
+            self._levels = result["levels"]
+            self._current_question = result["item"]
+    
     @property
     def answers(self):
         return self._answers
 
-    def _get_question_path_by_id(self, manifest, question_id, level=1, prev_levels=[]):
-        for i in range(len(manifest)):
-            item = manifest[i]
-            levels = [*prev_levels, {"level": manifest, "index": i + 1}]
+    def _must_stop(self, prev_answer):
+        return estr(prev_answer, self._stop_command)
+
+    def _get_question_by_id(self, level_list, qid, prev_levels=None):
+        level = Level(level_list)
+
+        if prev_levels is not None:
+            prev_levels.change_level(level)
+        else:
+            prev_levels = Levels([level])
+
+        for item in level_list:
+            prev_levels.level.incr()
 
             if type(item) == dict:
-                if item.get("id") and item.get("action") and item["id"] == question_id:
-                    return {"levels": levels, "item": item, "index": i}
+                if item.get(ID) == qid and item.get(ACTION):
+                    return {"levels": prev_levels, "item": item}
                 else:
                     for key in item:
                         if key == ON_NO or key == ON_YES:
-                            result = self._get_question_path_by_id(item[key], question_id, level + 1, levels)
+                            result = self._get_question_by_id(item[key], qid, prev_levels)
 
-                            if result is None:
-                                continue
-
-                            return result
-                        elif key == ON_CHOICES:
-                            for ch_id in item[key]:
-                                result = self._get_question_path_by_id(item[key][ch_id], question_id, level + 1, levels)
-
-                                if result is None:
-                                    continue
-
+                            if result is not None:
                                 return result
-            elif type(item) == list:
-                result = self._get_question_path_by_id(item, question_id, level + 1, levels)
+                        elif key == ON_CHOICES:
+                            for choice in item[key]:
+                                result = self._get_question_by_id(item[key][choice], qid, prev_levels)
 
-                if result is None:
-                    continue
-
-                return result
-
-        return None
-
-    def _reset_levels(self, curr_level, level_index, question_index, index_minus=False):
-        diff = 1 if index_minus else 0
-
-        if len(curr_level) == question_index - diff:
-            if level_index == 0:
-                return {"end": True}
-
-            self._question_levels.pop()
-            new_level_info = self._question_levels[level_index - 1]
-            new_level = new_level_info["level"]
-            self._current_question_index = new_level_info["index"]
-
-            if len(new_level) == self._current_question_index - 1:
-                return self._reset_levels(new_level, level_index - 1, self._current_question_index, index_minus=index_minus)
-            else:
-                return {"end": False, "level": new_level, "index": level_index - 1}
-
-    def _change_level(self, level):
-        self._question_levels.append({"level": level, "index": 0})
-        self._current_question_index = 0
-
-    def _format_result(self, text, skip=False):
-        return {"text": text, "skip": skip}
+                                if result is not None:
+                                    return result
 
     def get_next_question(self, prev_answer=None):
         prev_question = self._current_question
 
-        if prev_answer and self._stop_command and estr(prev_answer, self._stop_command):
-            self._answers["stopped"] = True
+        if self._must_stop(prev_answer) or self._answers.stopped:
+            self._answers.toggle_stop(True)
             return None
 
         if prev_question:
             if prev_question[ACTION] == ACTION_TEXT_QUESTION:
-                self._answers["data"][prev_question[ID]] = prev_answer
-            elif prev_question[ACTION] == ACTION_CHOICES_QUESTION:
-                choice_id = prev_question[CHOICES].get(prev_answer)
-
-                if not choice_id:
-                    return self._format_result(prev_question[ON_INVALID_CHOICE])
-                else:
-                    self._answers["data"][prev_question[ID]] = choice_id
-                    self._change_level(prev_question[ON_CHOICES][choice_id])
+                self._answers.set(prev_question[ID], prev_answer)
             elif prev_question[ACTION] == ACTION_YES_NO_QUESTION:
                 yes = estr(prev_answer, prev_question[YES])
                 no = estr(prev_answer, prev_question[NO])
 
                 if not (yes or no):
-                    return self._format_result(prev_question[ON_INVALID_CHOICE])
-                else:
-                    if yes:
-                        self._answers["data"][prev_question[ID]] = True
-                        self._change_level(prev_question[ON_YES])
-                    else:
-                        self._answers["data"][prev_question[ID]] = False
-                        self._change_level(prev_question[ON_NO])
+                    return Result(prev_question[ON_INVALID_CHOICE])
+
+                self._answers.set(prev_question[ID], yes)
+                level = question[ON_YES] if yes else question[ON_NO]
+                self._levels.change_level(level)
+            elif prev_question[ACTION] == ACTION_CHOICES_QUESTION:
+                choice_id = prev_question[CHOICES].get(prev_answer)
+
+                if choice_id is None:
+                    return Result(prev_question[ON_INVALID_CHOICE])
+
+                self._answers.set(prev_question[ID], choice_id)
+                level = Level(prev_question[ON_CHOICES][choice_id])
+                self._levels.change_level(level)
             elif prev_question[ACTION] == ACTION_LIST_QUESTION:
-                if not estr(prev_question[STOP_COMMAND], prev_answer) and not self._answers["data"][prev_question[ID]]["stopped"]:
-                    self._answers["data"][prev_question[ID]]["data"].append(prev_answer)
-                    answers_count = len(self._answers["data"][prev_question[ID]]["data"])
-                    return self._format_result("{}{}".format(prev_question[TEXT], prev_question[START_NUMBER] + answers_count))
-                else:
-                    self._answers["data"][prev_question[ID]]["stopped"] = True
+                if not estr(prev_answer, prev_question[STOP_COMMAND]):
+                    answers = self._answers.get(prev_question[ID])
+
+                    if answers is None:
+                        answers = []
+                        self._answers.set(prev_question[ID], [])
+
+                    if prev_answer:
+                        self._answers.set(prev_question[ID], [*answers, prev_answer])
+                        answers.append(prev_answer)
+
+                    count = len(answers)
+                    text = "{}{}".format(self._current_question[TEXT], self._current_question[START_NUMBER] + count)
+                    return Result(text)
             elif prev_question[ACTION] == ACTION_TEXT:
-                self._answers["data"][prev_question[ID]] = True
+                self._answers.set(prev_question[ID], True)
 
-        last_level_index = len(self._question_levels) - 1
-        question_level = self._question_levels[last_level_index]["level"]
-        reset_result = self._reset_levels(question_level, last_level_index, self._current_question_index)
+        self._current_question = self._levels.get_next_question()
 
-        if reset_result:
-            if reset_result["end"]:
-                if prev_question[ACTION] != ACTION_TEXT:
-                    self._answers["data"][prev_question[ID]] = prev_answer
+        if self._current_question is not None:
+            text = None
 
-                return None
+            if self._current_question[ACTION] != ACTION_LIST_QUESTION:
+                text = self._current_question[TEXT]
             else:
-                question_level = reset_result["level"]
-                last_level_index = reset_result["index"]
+                text = "{}{}".format(self._current_question[TEXT], self._current_question[START_NUMBER])
 
-        question_index = self._current_question_index
-        question = question_level[question_index]
-        result = None
-
-        if question[ACTION] != ACTION_LIST_QUESTION:
-            result = question[TEXT]
-        else:
-            self._answers["data"][question[ID]] = {"data": [], "stopped": False}
-            result = "{}{}".format(question[TEXT], question[START_NUMBER])
-
-        self._current_question = question
-        self._current_question_index += 1
-        self._question_levels[last_level_index]["index"] = question_index + 1
-
-        return {"text": result, "id": question[ID], "skip": question[ACTION] == ACTION_TEXT}
+            return Result(text, self._current_question[ACTION] == ACTION_TEXT)

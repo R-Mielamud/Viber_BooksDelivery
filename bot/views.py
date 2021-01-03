@@ -89,16 +89,16 @@ class WebHook(View):
         question = conversations[uid].get_next_question(prev_answer)
 
         while question:
-            send_text(bot, uid, question["text"])
+            send_text(bot, uid, question.text)
 
-            if not question["skip"]:
-                if conversations[uid].answers["stopped"]:
+            if not question.skip:
+                if conversations[uid].answers.stopped:
                     user.convers_answers_data = {}
                     user.save()
                     conversations[uid] = Conversation(manifest)
                     return send_until_question(bot, uid, user, None)
                 else:
-                    user.convers_answers_data = conversations[uid].answers["data"]
+                    user.convers_answers_data = conversations[uid].answers.data
                     user.save()
                     break
 
@@ -150,13 +150,9 @@ class WebHook(View):
                 prev_answer = None
 
             if not conversations.get(uid) and user.convers_answers_data is not None:
-                answers = user.convers_answers_data
-                keys = list(answers.keys())
-
                 conversations[uid] = Conversation(
                     manifest,
-                    start_from_id=keys[-1] if len(keys) > 0 else None,
-                    default_answers_data=answers
+                    default_answers_data=user.convers_answers_data
                 )
 
             finished_convers = self.send_until_question(bot, uid, user, prev_answer)

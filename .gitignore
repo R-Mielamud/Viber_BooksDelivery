@@ -130,3 +130,5 @@ dmypy.json
 
 # Private
 .private
+
+helpers/conversation_old.py
