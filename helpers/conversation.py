@@ -202,6 +202,7 @@ class Conversation:
             else:
                 text = "{}{}".format(self._current_question[TEXT], self._current_question[START_NUMBER])
 
+            self._answers.set(self._current_question[ID], None)
             return Result(text, self._current_question[ACTION] == ACTION_TEXT)
 
 manifest = {

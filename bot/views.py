@@ -85,21 +85,23 @@ class WebHook(View):
     def success(self):
         return HttpResponse(status=200)
 
-    def send_until_question(self, bot, uid, user, prev_answer):
+    def send_until_question(self, bot, user, prev_answer):
+        uid = user.viber_id
         question = conversations[uid].get_next_question(prev_answer)
 
         while question:
             send_text(bot, uid, question.text)
+            print(question.text, question.skip)
 
             if not question.skip:
                 user.convers_answers_data = conversations[uid].answers.data
                 user.save()
+                print(conversations[uid].answers.data)
                 break
 
             question = conversations[uid].get_next_question(prev_answer)
 
-        if not question:
-            return True
+        return not question
 
     def post(self, request):
         data = request.body
@@ -140,16 +142,21 @@ class WebHook(View):
                 prev_answer = None
             elif not user.phone:
                 user.phone = text
+                user.convers_answers_data = {}
                 user.save()
                 prev_answer = None
 
-            if not conversations.get(uid) and user.convers_answers_data is not None:
+            print(prev_answer)
+
+            if not conversations.get(uid):
+                print("No convers", user.convers_answers_data)
+
                 conversations[uid] = Conversation(
                     manifest,
-                    default_answers_data=user.convers_answers_data
+                    default_answers=user.convers_answers_data
                 )
 
-            finished_convers = self.send_until_question(bot, uid, user, prev_answer)
+            finished_convers = self.send_until_question(bot, user, prev_answer)
             print(finished_convers)
 
             if finished_convers:
@@ -158,6 +165,6 @@ class WebHook(View):
                 user.convers_answers_data = {}
                 user.save()
                 conversations[uid] = Conversation(manifest)
-                self.send_until_question(bot, uid, user, None)
+                self.send_until_question(bot, user, None)
 
         return self.success()
