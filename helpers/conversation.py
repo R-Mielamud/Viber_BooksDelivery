@@ -97,7 +97,7 @@ class Levels:
 class Conversation:
     def __init__(self, manifest, default_answers={}):
         self._manifest = manifest[CONVERSATION]
-        self._stop_command = manifest[STOP_COMMAND]
+        self._stop_command = manifest.get(STOP_COMMAND)
         self._answers = StoppableDict(default_answers)
         keys = list(default_answers.keys())
 
@@ -148,7 +148,7 @@ class Conversation:
     def get_next_question(self, prev_answer=None):
         prev_question = self._current_question
 
-        if self._must_stop(prev_answer) or self._answers.stopped:
+        if self._stop_command and (self._must_stop(prev_answer) or self._answers.stopped):
             self._answers.toggle_stop(True)
             return None
 
@@ -203,3 +203,85 @@ class Conversation:
                 text = "{}{}".format(self._current_question[TEXT], self._current_question[START_NUMBER])
 
             return Result(text, self._current_question[ACTION] == ACTION_TEXT)
+
+manifest = {
+    "conversation": [
+        {
+            "id": "hello",
+            "action": "text",
+            "text": "Hello!"
+        },
+        {
+            "id": "how_help",
+            "action": "text_question",
+            "text": "How can I help you?"
+        },
+        {
+            "id": "vegetables_text",
+            "action": "text",
+            "text": "What vegetables do you like?"
+        },
+        {
+            "id": "vegetables",
+            "action": "list_question",
+            "text": "Vegetable ",
+            "start_number": 1,
+            "stop_command": "000"
+        },
+        {
+            "id": "fruit",
+            "action": "choices_question",
+            "text": "What do you like?\nIf apples, enter 1;\nIf lemons, enter 2\niIf carrots, enter 3",
+            "choices": {
+                "1": "apple",
+                "2": "lemon",
+                "3": "carrot"
+            },
+            "on_choices": {
+                "apple": [{
+                    "id": "apple",
+                    "action": "text",
+                    "text": "I like them too!"
+                }],
+                "lemon": [{
+                    "id": "lemon",
+                    "action": "text",
+                    "text": "I eat them only with sugar."
+                }],
+                "carrot": [{
+                    "id": "carrot",
+                    "action": "text",
+                    "text": "But they're not tasty!"
+                }]
+            },
+            "on_invalid_choice": "If apples, enter 1;\nIf lemons, enter 2\niIf carrots, enter 3"
+        },
+        {
+            "id": "bye",
+            "action": "text",
+            "text": "Bye!"
+        }
+    ],
+    "stop_command": "STOP"
+}
+
+convers = Conversation(
+    manifest,
+    default_answers={
+        "hello": True,
+        "how_help": "abc",
+        "vegetables_text": True,
+        "vegetables": ["def"]
+    }
+)
+
+question = convers.get_next_question("abc")
+prev_answer = None
+
+while question:
+    print(question.text)
+
+    if not question.skip:
+        prev_answer = input()
+
+    question = convers.get_next_question(prev_answer)
