@@ -11,6 +11,7 @@ from helpers.bot import (
     get_request,
     get_request_type,
     send_text,
+    parse_manifest,
     REQ_CHAT,
     REQ_MESSAGE,
     REQ_UNKNOWN
@@ -18,68 +19,7 @@ from helpers.bot import (
 
 FORBIDDEN = 403
 bot = init_bot()
-
-manifest = {
-    "conversation": [
-        {
-            "id": "hello",
-            "action": "text",
-            "text": "Hello!"
-        },
-        {
-            "id": "how_help",
-            "action": "text_question",
-            "text": "How can I help you?"
-        },
-        {
-            "id": "vegetables_text",
-            "action": "text",
-            "text": "What vegetables do you like?"
-        },
-        {
-            "id": "vegetables",
-            "action": "list_question",
-            "text": "Vegetable ",
-            "start_number": 1,
-            "stop_command": "000"
-        },
-        {
-            "id": "fruit",
-            "action": "choices_question",
-            "text": "What do you like?\nIf apples, enter 1;\nIf lemons, enter 2\niIf carrots, enter 3",
-            "choices": {
-                "1": "apple",
-                "2": "lemon",
-                "3": "carrot"
-            },
-            "on_choices": {
-                "apple": [{
-                    "id": "apple",
-                    "action": "text",
-                    "text": "I like them too!"
-                }],
-                "lemon": [{
-                    "id": "lemon",
-                    "action": "text",
-                    "text": "I eat them only with sugar."
-                }],
-                "carrot": [{
-                    "id": "carrot",
-                    "action": "text",
-                    "text": "But they're not tasty!"
-                }]
-            },
-            "on_invalid_choice": "If apples, enter 1;\nIf lemons, enter 2\niIf carrots, enter 3"
-        },
-        {
-            "id": "bye",
-            "action": "text",
-            "text": "Bye!"
-        }
-    ],
-    "stop_command": "STOP"
-}
-
+welcome, manifest = parse_manifest()
 conversations_storage = ConversationsStorage()
 
 class WebHook(View):
@@ -114,13 +54,13 @@ class WebHook(View):
         if request_type == REQ_CHAT:
             request_user = bot_request.user
             uid = request_user.id
-            user, created = ViberUser.objects.get_or_create(viber_id=uid)
+            user, created = ViberUser.objects.get_or_create(messenger_id=uid)
 
             if not created:
                 user.phone = None
                 user.save()
 
-            send_text(bot, uid, "Welcome to fruit bot! Enter your phone number:")
+            send_text(bot, uid, welcome)
         elif request_type == REQ_MESSAGE:
             message = bot_request.message
 
@@ -131,10 +71,10 @@ class WebHook(View):
             prev_answer = text
             request_user = bot_request.sender
             uid = request_user.id
-            user = ViberUser.objects.filter(viber_id=uid).first()
+            user = ViberUser.objects.filter(messenger_id=uid).first()
 
             if not user:
-                user = ViberUser.objects.create(viber_id=uid, phone=text)
+                user = ViberUser.objects.create(messenger_id=uid, phone=text)
                 prev_answer = None
             elif not user.phone:
                 user.phone = text

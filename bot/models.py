@@ -11,7 +11,8 @@ class Requisites(Dated):
     delivery_address = CharField(max_length=300, default="")
 
 class ViberUser(Model):
-    viber_id = CharField(max_length=50, default="1234567890A==")
+    messenger_id = CharField(max_length=50, default="1234567890A==")
+    messenger = CharField(max_length=20, default="Viber")
     phone = CharField(max_length=20, blank=True, null=True)
     requisites = OneToOneField(Requisites, on_delete=CASCADE, blank=True, null=True)
     convers_answers_data = OrderedJSONField(default="\{\}")

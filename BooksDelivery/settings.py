@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 import os
+import json
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -139,3 +140,5 @@ STATIC_URL = '/static/'
 # Viber API
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
+
+MANIFEST_PATH = BASE_DIR / "BooksDelivery" / "manifest.json"

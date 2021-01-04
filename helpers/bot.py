@@ -3,6 +3,7 @@ from viberbot.api.bot_configuration import BotConfiguration
 from viberbot.api.viber_requests import ViberMessageRequest, ViberConversationStartedRequest
 from viberbot.api.messages.text_message import TextMessage
 from BooksDelivery import settings
+import json
 
 REQ_CHAT = "chat_started"
 REQ_MESSAGE = "message"
@@ -41,3 +42,12 @@ def text_message(text):
 def send_text(bot, uid, text):
     message = text_message(text)
     return send_messages(bot, uid, [message])
+
+def parse_manifest():
+    with open(settings.MANIFEST_PATH) as mani_file:
+        content = json.load(mani_file)
+
+    manifest = content["manifest"]
+    welcome_message = content["welcome"]
+
+    return welcome_message, manifest
