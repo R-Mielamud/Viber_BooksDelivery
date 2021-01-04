@@ -204,3 +204,25 @@ class Conversation:
 
             self._answers.set(self._current_question[ID], None)
             return Result(text, self._current_question[ACTION] == ACTION_TEXT)
+
+class ConversationsStorage:
+    def __init__(self):
+        self.conversations = {}
+
+    def add(self, cid, *args, **kwargs):
+        conversation = Conversation(*args, **kwargs)
+        self.conversations[cid] = conversation
+        return conversation
+
+    def get(self, cid):
+        return self.conversations.get(cid)
+
+    def set(self, cid, conversation):
+        self.conversations[cid] = conversation
+
+    def remove(self, cid):
+        return self.conversations.pop(cid, None)
+
+    def exists(self, cid):
+        conversation = self.get(cid)
+        return bool(conversation)
