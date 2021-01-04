@@ -142,11 +142,10 @@ class WebHook(View):
                 user.save()
                 prev_answer = None
 
-            print(prev_answer)
             send = lambda text: send_text(bot, uid, text)
 
             if not conversations_storage.exists(uid):
-                conversations_storage.add(uid, manifest, default_answers=user.default_answers_data)
+                conversations_storage.add(uid, manifest, default_answers=user.convers_answers_data)
 
             conversation = conversations_storage.get(uid)
             conversation, question = self.send_until_question(send, conversation, prev_answer)
@@ -160,6 +159,5 @@ class WebHook(View):
                 user.save()
 
             conversations_storage.set(uid, conversation)
-            print(conversation.answers.data)
 
         return self.success()
