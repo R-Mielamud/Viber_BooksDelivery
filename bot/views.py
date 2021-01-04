@@ -93,7 +93,12 @@ class WebHook(View):
             if (not question) or conversation.answers.stopped:
                 user.convers_answers_data = {}
                 user.save()
-                conversation, _ = self.send_until_question(send, Conversation(manifest), None)
+
+                conversation, _ = self.send_until_question(
+                    send,
+                    Conversation(manifest, default_answers={}),
+                    None
+                )
             elif not question.skip:
                 user.convers_answers_data = conversation.answers.data
                 user.save()
