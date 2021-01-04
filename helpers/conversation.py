@@ -163,7 +163,7 @@ class Conversation:
                     return Result(prev_question[ON_INVALID_CHOICE])
 
                 self._answers.set(prev_question[ID], yes)
-                level = question[ON_YES] if yes else question[ON_NO]
+                level = prev_question[ON_YES] if yes else prev_question[ON_NO]
                 self._levels.change_level(level)
             elif prev_question[ACTION] == ACTION_CHOICES_QUESTION:
                 choice_id = prev_question[CHOICES].get(prev_answer)

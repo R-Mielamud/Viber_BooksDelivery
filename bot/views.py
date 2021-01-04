@@ -90,12 +90,14 @@ class WebHook(View):
         question = conversations[uid].get_next_question(prev_answer)
 
         while question:
+            if not question.skip:
+                user.convers_answers_data = conversations[uid].answers.data
+                user.save()
+
             send_text(bot, uid, question.text)
             print(question.text, question.skip)
 
             if not question.skip:
-                user.convers_answers_data = conversations[uid].answers.data
-                user.save()
                 print(conversations[uid].answers.data)
                 break
 
