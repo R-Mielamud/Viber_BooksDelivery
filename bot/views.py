@@ -91,6 +91,27 @@ class WebHook(View):
             conversation, question = self.send_until_question(send, conversation, prev_answer)
 
             if (not question) or conversation.answers.stopped:
+                action = conversation.answers.get("action")
+
+                if action == "order":
+                    Order.objects.create(books=conversation.answers.get("books"), user=user)
+                elif action == "requisites":
+                    requisites = Requisites.objects.create(
+                        delivery_phone=conversation.answers.get("delivery_phone"),
+                        delivery_name=conversation.answers.get("delivery_name"),
+                        post_service=conversation.answers.get("post_service"),
+                        delivery_address=conversation.answers.get("delivery_address")
+                    )
+
+                    requisites.save()
+                    user.requisites = requisites
+                elif action == "bill":
+                    Bill.objects.create(
+                        amount=conversation.answers.get("amount"),
+                        comment=conversation.answers.get("comment"),
+                        user=user
+                    )
+
                 user.convers_answers_data = {}
                 user.save()
 
