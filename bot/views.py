@@ -93,12 +93,14 @@ class WebHook(View):
             if not question.skip:
                 user.convers_answers_data = conversations[uid].answers.data
                 user.save()
+                saved = ViberUser.objects.get(pk=user.pk)
+                print(conversations[uid].answers.data, saved.convers_answers_data)
 
             send_text(bot, uid, question.text)
             print(question.text, question.skip)
 
             if not question.skip:
-                print(conversations[uid].answers.data)
+                print("Break")
                 break
 
             question = conversations[uid].get_next_question(prev_answer)
