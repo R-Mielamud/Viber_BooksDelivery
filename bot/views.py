@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from .models import ViberUser, Order, Requisites, Bill
 from helpers.conversation import Conversation, ACTION, ACTION_TEXT
 from viberbot.api.messages.text_message import TextMessage
-from helpers.conversation import ConversationsStorage
+from helpers.conversation import ConversationsStorage, Conversation
 
 from helpers.bot import (
     init_bot,
@@ -86,27 +86,18 @@ class WebHook(View):
     def success(self):
         return HttpResponse(status=200)
 
-    def send_until_question(self, bot, user, conversation, prev_answer):
-        uid = user.viber_id
+    def send_until_question(self, send, conversation, prev_answer):
         question = conversation.get_next_question(prev_answer)
 
         while question:
-            if not question.skip:
-                user.convers_answers_data = conversation.answers.data
-                user.save()
-                saved = ViberUser.objects.get(pk=user.pk)
-                print(conversation.answers.data, saved.convers_answers_data)
-
-            send_text(bot, uid, question.text)
-            print(question.text, question.skip)
+            send(question.text)
 
             if not question.skip:
-                print("Break")
                 break
 
             question = conversation.get_next_question(prev_answer)
 
-        return conversation, (not question)
+        return conversation, question
 
     def post(self, request):
         data = request.body
@@ -152,23 +143,23 @@ class WebHook(View):
                 prev_answer = None
 
             print(prev_answer)
+            send = lambda text: send_text(bot, uid, text)
+
+            if not conversations_storage.exists(uid):
+                conversations_storage.add(uid, manifest, default_answers=user.default_answers_data)
+
             conversation = conversations_storage.get(uid)
+            conversation, question = self.send_until_question(send, conversation, prev_answer)
 
-            if not conversation:
-                print("No convers", user.convers_answers_data)
-                conversations_storage.add(uid, manifest, default_answers=user.convers_answers_data)
-
-            new_conversation, finished_conversation = self.send_until_question(bot, user, prev_answer)
-            print(conversation._levels.level.index, new_conversation._levels.level.index, finished_conversation)
-
-            if finished_conversation:
-                # TODO: save answers data
-
+            if (not question) or conversation.answers.stopped:
                 user.convers_answers_data = {}
                 user.save()
-                conversations_storage.set(uid, Conversation(manifest))
-                self.send_until_question(bot, user, None)
-            else:
-                conversations_storage.set(uid, new_conversation)
+                conversation, _ = self.send_until_question(send, Conversation(manifest), None)
+            elif not question.skip:
+                user.convers_answers_data = conversation.answers.data
+                user.save()
+
+            conversations_storage.set(uid, conversation)
+            print(conversation.answers.data)
 
         return self.success()
