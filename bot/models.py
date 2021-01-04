@@ -1,4 +1,5 @@
 from django.db.models import *
+from BooksDelivery.model_fields.json import OrderedJSONField
 
 class Dated(Model):
     created_at = DateField(auto_now=True)
@@ -13,7 +14,7 @@ class ViberUser(Model):
     viber_id = CharField(max_length=50, default="1234567890A==")
     phone = CharField(max_length=20, blank=True, null=True)
     requisites = OneToOneField(Requisites, on_delete=CASCADE, blank=True, null=True)
-    convers_answers_data = JSONField(default=dict)
+    convers_answers_data = OrderedJSONField(default="\{\}")
 
 class Order(Dated):
     books = JSONField(default=list)
