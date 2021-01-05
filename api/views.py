@@ -28,7 +28,7 @@ class OrderAPIView(UserDependingAPIView):
     def get_update_action(self, pk):
         def action(user, data):
             order_set = self.queryset.filter(pk=pk)
-            res = order_set.update(**data, user=user)
+            order_set.update(**data, user=user)
             return order_set.first()
 
         return action
@@ -53,9 +53,9 @@ class BillAPIView(UserDependingAPIView):
 
     def get_update_action(self, pk):
         def action(user, data):
-            order_set = self.queryset.filter(pk=pk)
-            res = order_set.update(**data, user=user)
-            return order_set.first()
+            bill_set = self.queryset.filter(pk=pk)
+            bill_set.update(**data, user=user)
+            return bill_set.first()
 
         return action
 
