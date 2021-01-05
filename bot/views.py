@@ -90,7 +90,16 @@ class WebHook(View):
             conversation = conversations_storage.get(uid)
             conversation, question = self.send_until_question(send, conversation, prev_answer)
 
-            if (not question) or conversation.answers.stopped:
+            if conversation.answers.stopped:
+                user.convers_answers_data = {}
+                user.save()
+
+                conversation, _ = self.send_until_question(
+                    send,
+                    Conversation(manifest, default_answers={}),
+                    None
+                )
+            elif not question:
                 action = conversation.answers.get("action")
 
                 if action == "order":
