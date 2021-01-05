@@ -29,9 +29,9 @@ class OrderedJSONField(TextField):
 
         try:
             json.dumps(value)
-        except TypeError:
+        except:
             raise exceptions.ValidationError(
-                self.error_messages['invalid'],
-                code='invalid',
-                params={'value': value},
+                self.error_messages["invalid"],
+                code="invalid",
+                params={"value": value}
             )
