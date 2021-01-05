@@ -15,7 +15,7 @@ class ViberUser(Model):
     messenger = CharField(max_length=20, default="Viber")
     phone = CharField(max_length=20, blank=True, null=True)
     requisites = OneToOneField(Requisites, on_delete=CASCADE, blank=True, null=True)
-    convers_answers_data = OrderedJSONField(default="\{\}")
+    convers_answers_data = OrderedJSONField(default="{}")
 
 class Order(Dated):
     books = JSONField(default=list)

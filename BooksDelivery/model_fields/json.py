@@ -1,5 +1,6 @@
 from django.db.models import TextField
 from django.core import exceptions
+from rest_framework.serializers import Field as FieldSerializer
 import json
 
 class OrderedJSONField(TextField):
@@ -35,3 +36,16 @@ class OrderedJSONField(TextField):
                 code="invalid",
                 params={"value": value}
             )
+
+class OrderedJSONFieldSerializer(FieldSerializer):
+    def to_internal_value(self, data):
+        try:
+            return json.dumps(data)
+        except:
+            return data
+
+    def to_representation(self, value):
+        try:
+            return json.loads(value)
+        except:
+            return value
