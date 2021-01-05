@@ -1,4 +1,5 @@
 from django.http import JsonResponse
+from django.views import View
 from rest_framework.viewsets import ModelViewSet
 from bot.models import ViberUser, Order, Requisites, Bill
 from api.serializers import UserSerializer, OrderSerializer, RequisitesSerializer, BillSerializer
@@ -63,3 +64,16 @@ class BillAPIView(UserDependingAPIView):
 
     def partial_update(self, request, pk, **kwargs):
         return self.user_including_request(request, self.get_update_action(pk))
+
+class GetUserByMessengerIdAPI(View):
+    def get(self, request, **kwargs):
+        messenger_id = kwargs.get("messenger_id")
+        user = ViberUser.objects.filter(messenger_id=messenger_id).first()
+
+        if not user:
+            return JsonResponse({
+                "detail": "Not found."
+            }, status=404)
+
+        serializer = UserSerializer(user)
+        return JsonResponse(serializer.data)
