@@ -14,7 +14,7 @@ class RequisitesSerializer(ModelSerializer):
 
 class UserSerializer(ModelSerializer):
     requisites = RequisitesSerializer(allow_null=True, required=False)
-    convers_answers_data = OrderedJSONFieldSerializer(write_only=True, required=False)
+    convers_answers_data = OrderedJSONFieldSerializer(required=False)
 
     class Meta:
         model = ViberUser
