@@ -152,6 +152,7 @@ MANIFEST_PATH = BASE_DIR / "BooksDelivery" / "manifest.json"
 CORS_ALLOWED_ORIGINS = [
     "https://nicolaus.com.ua",
     "http://nicolaus.com.ua",
+    "http://localhost:3000",
 ]
 
 CORS_ALLOW_METHODS = [
