@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    "corsheaders",
     "rest_framework",
     "bot",
     "api",
@@ -50,6 +51,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -144,3 +146,19 @@ STATIC_URL = '/static/'
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 
 MANIFEST_PATH = BASE_DIR / "BooksDelivery" / "manifest.json"
+
+# Cross-Origin Resource Sharing
+
+CORS_ALLOWED_ORIGINS = [
+    "https://nicolaus.com.ua",
+    "http://nicolaus.com.ua",
+]
+
+CORS_ALLOW_METHODS = [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "OPTIONS",
+]
