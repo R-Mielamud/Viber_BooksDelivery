@@ -15,6 +15,7 @@ ON_YES = "on_yes"
 ACTION = "action"
 CHOICES = "choices"
 ON_CHOICES = "on_choices"
+MAX_ANSWERS = "max_answers"
 STOP_COMMAND = "stop_command"
 START_NUMBER = "start_number"
 CONVERSATION = "conversation"
@@ -179,8 +180,11 @@ class Conversation:
                         answers.append(prev_answer)
 
                     count = len(answers)
-                    text = "{}{}".format(self._current_question[TEXT], self._current_question[START_NUMBER] + count)
-                    return Result(text)
+                    max_answers = prev_question[MAX_ANSWERS]
+
+                    if count < max_answers:
+                        text = "{}{}".format(self._current_question[TEXT], self._current_question[START_NUMBER] + count)
+                        return Result(text)
             elif prev_question[ACTION] == ACTION_TEXT:
                 self._answers.set(prev_question[ID], True)
 
