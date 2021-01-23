@@ -57,6 +57,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "api.middlewares.check_api_key_middleware",
 ]
 
 ROOT_URLCONF = 'BooksDelivery.urls'
@@ -163,3 +164,7 @@ CORS_ALLOW_METHODS = [
     "DELETE",
     "OPTIONS",
 ]
+
+# API Key
+
+API_KEY = os.environ.get("API_KEY", "")

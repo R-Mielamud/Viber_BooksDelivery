@@ -1,4 +1,4 @@
-Django==3.1.4
+Django==3.1.5
 python-dotenv==0.15.0
 viberbot==1.0.11
 django-rest-framework==0.1.0
