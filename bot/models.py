@@ -30,10 +30,6 @@ class ViberUser(Model, BaseCSVModel):
         return "{} through {}".format(self.phone, self.messenger)
 
     @classmethod
-    def csv_dto(cls, instance):
-        return super().csv_dto(instance)
-
-    @classmethod
     def csv_schema(cls):
         return {
             "id": "ID",
