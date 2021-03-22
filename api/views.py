@@ -2,6 +2,7 @@ from django.http import JsonResponse
 from django.views import View
 from rest_framework.viewsets import ModelViewSet
 from bot.models import ViberUser, Order, Requisites, Bill
+from BooksDelivery.base import BaseCSVExportAPI
 
 from api.serializers import (
     GetUserSerializer, ModUserSerializer,
@@ -53,3 +54,12 @@ class GetUserByMessengerIdAPI(View):
 
         serializer = GetUserSerializer(user)
         return JsonResponse(serializer.data)
+
+class UserCSVExport(BaseCSVExportAPI):
+    model = ViberUser
+
+class BillCSVExport(BaseCSVExportAPI):
+    model = Bill
+
+class OrderCSVExport(BaseCSVExportAPI):
+    model = Order
