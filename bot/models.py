@@ -2,10 +2,10 @@ from django.db.models import *
 from BooksDelivery.model_fields.json import OrderedJSONField
 from BooksDelivery.base import BaseCSVModel
 
-class Dated:
+class Dated(Model):
     created_at = DateField(auto_now=True)
 
-class Requisites(Model, Dated):
+class Requisites(Dated):
     delivery_phone = CharField(max_length=20, default="+000000000000")
     delivery_name = CharField(max_length=100, default="")
     post_service = CharField(max_length=300, default="")
@@ -43,7 +43,7 @@ class ViberUser(Model, BaseCSVModel):
             "requisites.delivery_address": "Delivery address",
         }
 
-class Order(Model, Dated, BaseCSVModel):
+class Order(Dated, BaseCSVModel):
     books = JSONField(default=list)
     user = ForeignKey(to=ViberUser, on_delete=CASCADE, related_name="orders", blank=True, null=True)
 
@@ -63,7 +63,7 @@ class Order(Model, Dated, BaseCSVModel):
             "books": "Books"
         }
 
-class Bill(Model, Dated, BaseCSVModel):
+class Bill(Dated, BaseCSVModel):
     amount = CharField(max_length=100, default="")
     comment = TextField(max_length=500, default="")
     user = ForeignKey(to=ViberUser, on_delete=CASCADE, related_name="bills", blank=True, null=True)
